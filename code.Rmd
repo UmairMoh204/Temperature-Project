@@ -1,0 +1,86 @@
+---
+title: "Final Project"
+author: "Yosephine and Umair"
+date: "2023-12-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(shiny)
+```
+
+```{r}
+# weather_data <- read.csv("~/Desktop/minneapolis_st_paul_weather_data.csv")
+weather_data <- read_csv("/Users/hamzamohammed/Downloads/minneapolis_st_paul_weather_data.csv")
+
+weather_data$Year <- as.numeric(format(as.Date(weather_data$Date), "%Y"))
+
+weather_data
+```
+
+```{r}
+# Filter the data for the relevant years (1920 to 2020)
+weather_data <- weather_data[weather_data$Year >= 1920 & weather_data$Year <= 2020, ]
+
+weather_data$ExtremeHeat <- ifelse(weather_data$`Maximum Temperature degrees (F)` > 90, 1, 0)
+weather_data$ExtremeCold <- ifelse(weather_data$`Minimum Temperature degrees (F)` < -35, 1, 0)
+
+extreme_events <- weather_data %>%
+  group_by(Year) %>%
+  summarise(ExtremeHeatDays = sum(ExtremeHeat), ExtremeColdDays = sum(ExtremeCold))
+
+extreme_events
+```
+```{r}
+# Plot the data using ggplot2
+ggplot(extreme_events, aes(x = Year)) +
+  geom_line(aes(y = ExtremeHeatDays, color = "Extreme Heat"), size = 1) +
+  geom_line(aes(y = ExtremeColdDays, color = "Extreme Cold"), size = 1) +
+  labs(title = "Extreme Temperature Events Over the Years",
+       x = "Year",
+       y = "Number of Extreme Temperature Days") +
+  scale_color_manual(values = c("Extreme Heat" = "orange", "Extreme Cold" = "#007bc2")) +
+  theme_minimal()
+```
+
+```{r}
+
+# Calculate mean max and min temperatures
+mean_temperature <- weather_data %>%
+  group_by(Year) %>%
+  summarize(
+    Mean_Max_Temperature = mean(as.numeric(`Maximum Temperature degrees (F)`, na.rm = TRUE)),
+    Mean_Min_Temperature = mean(as.numeric(`Minimum Temperature degrees (F)`, na.rm = TRUE))
+  )
+
+mean_temperature
+cleanedData <- mean_temperature[complete.cases(mean_temperature), ]
+
+
+```
+
+```{r}
+cleanedData %>%
+  ggplot(aes(x = as.numeric(Year), y = Mean_Max_Temperature)) + geom_point() +
+  geom_smooth(method = 'lm') +
+  labs(title = "Mean Maximum Temperature Growth Over the Years",
+       x = "Year",
+       y = "Mean Maximum Temperature")
+
+cleanedData %>%
+  ggplot(aes(x = as.numeric(Year), y = Mean_Min_Temperature)) + geom_point() +
+  geom_smooth(method = 'lm') +
+  labs(title = "Mean Minimum Temperature Growth Over the Years",
+       x = "Year",
+       y = "Mean Minimum Temperature")
+```
+```{r}
+runApp("App-1")
+```
+
